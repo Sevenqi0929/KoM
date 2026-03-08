@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Your Message - {{ capsule.title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 0 auto; padding: 30px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+    <h1 style="font-size: 28px; color: #e91e63; text-align: center; margin-bottom: 20px;">
+        ✍️ Add Your Message to "{{ capsule.title }}"
+    </h1>
+    
+    <p style="color: #666; text-align: center; margin-bottom: 30px;">
+        This message will be sealed with your partner's until {{ capsule.open_date.strftime('%B %d, %Y') }}
+    </p>
+    
+    <form method="POST">
+        <textarea name="content" rows="6" required placeholder="Write your message to your partner..." style="
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            margin-bottom: 20px;
+        "></textarea>
+        
+        <button type="submit" style="
+            width: 100%;
+            padding: 14px;
+            background: #e91e63;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        " onmouseover="this.style.background='#c2185b'" onmouseout="this.style.background='#e91e63'">
+            🎀 Add to Time Capsule
+        </button>
+    </form>
+</div>
+{% endblock %}

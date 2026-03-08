@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KoM{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        nav {
+            background-color: #0d47a1;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-brand {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center; /* 让导航链接垂直居中对齐 */
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover {
+            color: #bbdefb;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .flash-messages {
+            margin-bottom: 1rem;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 0.8rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .flash-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 0.8rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        /* 首页中央大标题样式 */
+        .home-title {
+            font-size: 64px; /* 比原来更大 */
+            color: #0d47a1;
+            margin-bottom: 40px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('home') }}" class="nav-brand">KoM</a>
+        <div class="nav-links">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('profile', user_id=current_user.id) }}">My Profile</a>
+            <a href="{{ url_for('create_diary') }}">Post Diary</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+            <a href="{{ url_for('time_capsule_list') }}">⏱️ Time Capsules</a>
+            {% set nest = current_user.nest_as_user1[0] if current_user.nest_as_user1 else (current_user.nest_as_user2[0] if current_user.nest_as_user2 else None) %}
+            {% if nest %}
+            <a href="{{ url_for('nest_page', nest_id=nest.id) }}" style="background: #ffd700; color: #0d47a1; padding: 8px 16px; border-radius: 6px; font-weight: 600;">💖 Exclusive Nest</a>
+            {% else %}
+            <a href="{{ url_for('profile', user_id=current_user.id) }}" style="background: #0d47a1; color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600;">📩 Invite Partner</a>
+            {% endif %}
+            <a href="{{ url_for('create_time_capsule') }}" style="background: #d32f2f; color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600;">+ Create Capsule</a>
+            {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+    <!-- 邀请弹窗（默认隐藏） -->
+<div id="inviteModal" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+">
+    <div style="
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    ">
+        <h3 style="font-size: 20px; color: #0d47a1; margin-bottom: 20px; text-align: center;">Invite Partner to Nest</h3>
+        <form method="POST" action="{{ url_for('create_nest') }}">
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 14px; color: #666; margin-bottom: 5px;">Enter Partner's Username:</label>
+                <input type="text" name="partner_username" required style="
+                    width: 100%;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    font-size: 16px;
+                ">
+            </div>
+            <button type="submit" style="
+                width: 100%;
+                padding: 12px;
+                background: #0d47a1;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+            ">
+                Send Invitation
+            </button>
+            <button type="button" onclick="closeInviteModal()" style="
+                width: 100%;
+                margin-top: 10px;
+                padding: 12px;
+                background: #eee;
+                color: #666;
+                border: none;
+                border-radius: 6px;
+                font-size: 16px;
+                cursor: pointer;
+            ">
+                Cancel
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+// 邀请弹窗控制
+function openInviteModal() {
+    document.getElementById('inviteModal').style.display = 'flex';
+}
+function closeInviteModal() {
+    document.getElementById('inviteModal').style.display = 'none';
+}
+document.getElementById('inviteModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeInviteModal();
+});
+</script>
+</body>
+</html>

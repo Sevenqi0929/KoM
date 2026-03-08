@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.author.username }}'s Post{% endblock %}
+
+{% block content %}
+<!-- 动态详情 -->
+<div class="post-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <strong>{{ post.author.username }}</strong>
+        <small style="color: #64748b;">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+    </div>
+    <p class="post-content">{{ post.content }}</p>
+    <a href="{{ url_for('index') }}" class="btn btn-outline">返回首页</a>
+</div>
+
+<!-- 留言表单 -->
+<div class="comment-form">
+    <h5 style="margin-bottom: 1rem; color: #1e293b;">写留言</h5>
+    <form method="POST" action="{{ url_for('post_detail', post_id=post.id) }}">
+        <div style="margin-bottom: 1rem;">
+            <textarea class="post-textarea" name="comment" rows="2" placeholder="给这篇帖子留言..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">发送留言</button>
+    </form>
+</div>
+
+<!-- 留言列表 -->
+<div class="comment-section">
+    <h5 style="margin-bottom: 1rem; color: #1e293b;">留言区 ({{ post.comments|length }})</h5>
+    {% for comment in post.comments %}
+        <div class="comment-card">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                <strong>{{ comment.author.username }}</strong>
+                <small style="color: #64748b;">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+            <p style="margin: 0;">{{ comment.content }}</p>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 2rem; color: #64748b;">
+            <p>暂无留言，快来抢沙发吧！</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

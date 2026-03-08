@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user.username }}'s Profile{% endblock %}
+
+{% block content %}
+<div style="position: relative; min-height: 100vh; padding: 20px; max-width: 1400px; margin: 0 auto;">
+    {% if user.background_image %}
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('/static/{{ user.background_image }}'); background-size: cover; opacity: 0.4; z-index: -1;"></div>
+    {% endif %}
+
+    <!-- 右上角状态气泡（下移避免遮挡导航栏） -->
+    <div style="position: absolute; top: 80px; right: 20px; display: flex; align-items: center; gap: 8px; z-index: 999;">
+        <div id="statusText" style="
+            background: rgba(255,255,255,0.9);
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-size: 16px;
+            color: #222;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        ">Feeling good 😊</div>
+
+        {% if current_user.id == user.id %}
+        <button onclick="editStatus()" style="
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        ">✏️</button>
+        {% endif %}
+    </div>
+
+    <!-- 用户名 -->
+    <h1 id="profileUsername" style="color: #0d47a1; font-size: 72px; font-weight: bold; margin-bottom: 20px; position: relative; z-index: 1;">
+        {{ user.username }}
+    </h1>
+
+    <!-- 颜色修改按钮（仅本人可见） -->
+    {% if current_user.id == user.id %}
+    <div style="margin-bottom: 30px; position: relative; z-index: 1;">
+        <button id="colorChangeBtn" style="
+            background-color: #0d47a1; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            padding: 12px 24px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer;
+            transition: all 0.3s ease;
+        ">
+            Change Name Color
+        </button>
+        <input type="color" id="nameColorPicker" value="#0d47a1" style="width: 40px; height: 40px; vertical-align: middle; cursor: pointer; margin-left: 10px;">
+    </div>
+    {% endif %}
+
+    <!-- 头像 + 操作按钮区 -->
+    <div style="display: flex; align-items: center; gap: 50px; margin-bottom: 40px; flex-wrap: wrap; position: relative; z-index: 9999;">
+        <!-- 可点击跳转的头像 -->
+        <a href="{{ url_for('profile', user_id=user.id) }}" style="text-decoration: none;">
+            <img src="/static/{{ user.avatar if user.avatar else 'default_avatar.png' }}" alt="{{ user.username }} avatar" style="
+                width: 180px; 
+                height: 180px; 
+                border-radius: 50%; 
+                object-fit: cover; 
+                border: 3px solid #0d47a1;
+                transition: transform 0.2s ease;
+            " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        </a>
+
+        {% if current_user.is_authenticated %}
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- 所有人可添加贴纸：终极修复 - 改用button直接触发 -->
+            <form id="stickerForm" method="POST" action="{{ url_for('add_sticker', user_id=user.id) }}" enctype="multipart/form-data">
+                <button type="button" class="btn-custom light-blue" onclick="document.getElementById('stickerInput').click()" style="border: none; padding: 8px 15px; cursor: pointer;">
+                    Add Sticker to Profile
+                </button>
+                <input type="file" name="sticker" id="stickerInput" accept="image/png, image/jpg, image/gif, image/bmp" style="display: none;" onchange="this.form.submit()">
+                <input type="hidden" name="x" value="100">
+                <input type="hidden" name="y" value="100">
+            </form>
+            
+            <!-- 仅本人可更换头像/背景：终极修复 - 改用button直接触发 -->
+            {% if current_user.id == user.id %}
+            <form id="avatarForm" method="POST" action="{{ url_for('upload_avatar') }}" enctype="multipart/form-data">
+                <button type="button" class="btn-custom deep-blue" onclick="document.getElementById('avatarInput').click()" style="border: none; padding: 8px 15px; cursor: pointer;">
+                    Change Avatar
+                </button>
+                <input type="file" name="avatar" id="avatarInput" accept="image/png, image/jpg, image/gif, image/bmp" style="display: none;" onchange="this.form.submit()">
+            </form>
+            <form id="backgroundForm" method="POST" action="{{ url_for('upload_background') }}" enctype="multipart/form-data">
+                <button type="button" class="btn-custom medium-blue" onclick="document.getElementById('backgroundInput').click()" style="border: none; padding: 8px 15px; cursor: pointer;">
+                    Change Background
+                </button>
+                <input type="file" name="background" id="backgroundInput" accept="image/png, image/jpg, image/gif, image/bmp" style="display: none;" onchange="this.form.submit()">
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 小窝功能区域（核心新增） -->
+    <div style="margin: 40px 0; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: relative; z-index: 1;">
+        {% if nest_info %}
+        <!-- 已创建小窝：显示入口+退出按钮 -->
+        <h3 style="font-size: 22px; color: #0d47a1; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            🏠 Your Nest with {{ nest_info.partner_username }}
+        </h3>
+        <p style="font-size: 18px; color: #333; margin-bottom: 20px;">Together for {{ nest_info.days_together }} days!</p>
+        <div style="display: flex; gap: 15px;">
+            <a href="{{ url_for('nest_page', nest_id=nest_info.id) }}" style="
+                padding: 12px 24px;
+                background: #0d47a1;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            ">Go to Nest</a>
+            <a href="{{ url_for('leave_nest', nest_id=nest_info.id) }}" style="
+                padding: 12px 24px;
+                background: #f44336;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            " onclick="return confirm('Are you sure to leave this nest? You can invite someone new later.')">Leave Nest</a>
+        </div>
+        {% else %}
+        <!-- 未创建小窝：显示邀请表单 -->
+        <h3 style="font-size: 22px; color: #0d47a1; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            📩 Invite Someone to Create a Nest
+        </h3>
+        <form action="{{ url_for('create_nest') }}" method="POST" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <input type="text" name="partner_username" placeholder="Enter username to invite" required style="
+                padding: 12px 15px;
+                font-size: 16px;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                flex: 1;
+                min-width: 200px;
+            ">
+            <button type="submit" style="
+                padding: 12px 24px;
+                background: #0d47a1;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            ">Invite</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- 每日打卡模块：Feeling Good 下方 -->
+    <div style="margin-top: 40px; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: relative; z-index: 1;">
+        <h3 style="font-size: 22px; color: #e91e63; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            📅 Daily Check-in
+        </h3>
+
+        <!-- 今日打卡问题 -->
+        <div style="margin-bottom: 25px;">
+            <p style="font-size: 18px; color: #333; margin-bottom: 15px;">{{ today_question }}</p>
+            
+            <!-- 只有自己能修改打卡状态 -->
+            {% if user.id == current_user.id %}
+            <form method="POST" action="{{ url_for('submit_checkin') }}" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <input type="hidden" name="question" value="{{ today_question }}">
+                
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" name="answer" value="True" required 
+                           {% if today_checkin and today_checkin.answer %}checked{% endif %}>
+                    <span style="font-size: 16px; color: #4caf50;">✅ Yes</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" name="answer" value="False" 
+                           {% if today_checkin and not today_checkin.answer %}checked{% endif %}>
+                    <span style="font-size: 16px; color: #f44336;">❌ No</span>
+                </label>
+                
+                <button type="submit" style="
+                    padding: 6px 15px;
+                    background: #e91e63;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    cursor: pointer;
+                ">Save</button>
+            </form>
+            {% else %}
+            <!-- 他人查看：只显示打卡状态，不可修改 -->
+            <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                {% if today_checkin %}
+                    {% if today_checkin.answer %}
+                    <span style="font-size: 16px; color: #4caf50; font-weight: 600;">✅ Yes</span>
+                    {% else %}
+                    <span style="font-size: 16px; color: #f44336; font-weight: 600;">❌ No</span>
+                    {% endif %}
+                {% else %}
+                <span style="font-size: 16px; color: #666;">Not checked in yet today</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 历史打卡记录（最近7天，所有人可见） -->
+        {% if past_checkins %}
+        <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+            <h4 style="font-size: 18px; color: #666; margin-bottom: 15px;">Past 7 Days Check-ins</h4>
+            <div style="display: grid; gap: 10px;">
+                {% for checkin in past_checkins %}
+                <div style="padding: 10px; background: #f8f9fa; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="font-size: 14px; color: #333; margin: 0;">{{ checkin.question }}</p>
+                        <p style="font-size: 12px; color: #999; margin: 2px 0 0 0;">{{ checkin.checkin_date.strftime('%Y-%m-%d') }}</p>
+                    </div>
+                    {% if checkin.answer %}
+                    <span style="color: #4caf50; font-weight: 600;">✅</span>
+                    {% else %}
+                    <span style="color: #f44336; font-weight: 600;">❌</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 该用户的日记列表：核心修改 - 增加margin-top使其下移 -->
+    <div style="margin-top: 60px; margin-bottom: 40px; position: relative; z-index: 1;">
+        <h2 style="font-size: 32px; color: #333; margin-bottom: 20px;">{{ user.username }}'s Diaries</h2>
+        <div style="display: grid; gap: 20px;">
+            {% for diary in user_diaries %}
+            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <h3 style="font-size: 22px; margin-bottom: 10px;">{{ diary.title }}</h3>
+                <p style="color: #666; font-size: 14px; margin-bottom: 10px;">{{ diary.created_at.strftime('%Y-%m-%d') }}</p>
+                <p style="line-height: 1.5; color: #444;">{{ diary.content[:200] }}{% if diary.content|length > 200 %}...{% endif %}</p>
+            </div>
+            {% endfor %}
+            {% if not user_diaries %}
+            <p style="color: #666;">This user hasn't posted any diaries yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 贴纸区域说明 -->
+    <h3 style="position: relative; z-index: 1; margin-bottom: 20px;">Profile Stickers (Everyone can add, only owner can delete)</h3>
+
+    <!-- 贴纸（所有人可见，仅本人可删） -->
+    {% for sticker in stickers %}
+    <div class="sticker" id="sticker-{{ sticker.id }}" style="
+        position: absolute; 
+        left: {{ sticker.position_x }}px; 
+        top: {{ sticker.position_y }}px; 
+        width: 80px; 
+        height: 80px; 
+        cursor: move;
+        border: none; 
+        background: transparent; 
+        box-shadow: none;
+        z-index: 999;
+    ">
+        <!-- 修复贴纸路径：确保/static/前缀正确 -->
+        <img src="/static/{{ sticker.content }}" alt="Sticker" style="width: 100%; height: 100%; object-fit: contain;">
+        
+        <!-- 仅本人可见删除按钮 -->
+        {% if current_user.id == user.id %}
+        <div class="sticker-delete" onclick="deleteSticker({{ sticker.id }})" style="
+            position: absolute; top: -8px; right: -8px; background: #c62828; color: white;
+            width: 20px; height: 20px; border-radius: 50%; text-align: center; line-height: 20px;
+            font-size: 14px; cursor: pointer; z-index: 1000;
+        ">×</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 样式 -->
+<style>
+.btn-custom {
+    display: inline-block;
+    padding: 8px 15px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    transition: opacity 0.3s ease;
+    width: 200px;
+    pointer-events: auto !important;
+    z-index: 9999 !important;
+}
+.btn-custom:hover { opacity: 0.9; }
+.deep-blue { background-color: #0d47a1; }
+.medium-blue { background-color: #1976d2; }
+.light-blue { background-color: #2196f3; }
+.sticker.dragging { z-index: 9999 !important; }
+body {
+    font-family: Arial, sans-serif;
+}
+/* 小窝按钮 hover 效果 */
+a[href*="nest_page"], a[href*="leave_nest"] {
+    text-decoration: none;
+}
+a[href*="nest_page"]:hover {
+    background-color: #1565c0;
+}
+a[href*="leave_nest"]:hover {
+    background-color: #d32f2f;
+}
+</style>
+
+<!-- 脚本 -->
+{% block scripts %}
+<script>
+let statusText;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化状态文本
+    statusText = document.getElementById('statusText');
+    
+    // 加载保存的状态
+    const savedStatus = localStorage.getItem('user_status_{{ user.id }}');
+    if (savedStatus) statusText.innerText = savedStatus;
+
+    // 用户名颜色修改（仅本人）
+    const colorPicker = document.getElementById('nameColorPicker');
+    const usernameElement = document.getElementById('profileUsername');
+    const colorBtn = document.getElementById('colorChangeBtn');
+
+    if (colorPicker && colorBtn) {
+        colorPicker.addEventListener('input', function() {
+            usernameElement.style.color = this.value;
+            colorBtn.style.backgroundColor = this.value;
+            localStorage.setItem('userColor_{{ user.id }}', this.value);
+        });
+
+        // 加载保存的颜色
+        const savedColor = localStorage.getItem('userColor_{{ user.id }}');
+        if (savedColor) {
+            usernameElement.style.color = savedColor;
+            colorBtn.style.backgroundColor = savedColor;
+            colorPicker.value = savedColor;
+        }
+
+        colorBtn.addEventListener('click', () => colorPicker.click());
+    }
+
+    // 贴纸拖拽功能（所有人）
+    document.querySelectorAll('.sticker').forEach(sticker => {
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        sticker.addEventListener('mousedown', e => {
+            isDragging = true;
+            sticker.classList.add('dragging');
+            const rect = sticker.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            const root = document.querySelector('[style*="min-height: 100vh"]');
+            const rootRect = root.getBoundingClientRect();
+            sticker.style.left = (e.clientX - offsetX - rootRect.left) + 'px';
+            sticker.style.top = (e.clientY - offsetY - rootRect.top) + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            sticker.classList.remove('dragging');
+            
+            // 保存贴纸位置（修复参数名：x_pos → x，y_pos → y）
+            const stickerId = sticker.id.split('-')[1];
+            fetch(`/update-sticker/${stickerId}`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token() }}'  // 新增：CSRF令牌
+                },
+                body: `x=${parseInt(sticker.style.left)}&y=${parseInt(sticker.style.top)}`
+            });
+        });
+    });
+});
+
+// 编辑状态（仅本人）
+function editStatus() {
+    const current = statusText.innerText;
+    const newStatus = prompt("Edit your status:", current);
+    if (newStatus && newStatus.trim()) {
+        statusText.innerText = newStatus.trim();
+        localStorage.setItem('user_status_{{ user.id }}', newStatus.trim());
+    }
+}
+
+// 删除贴纸（仅本人）
+function deleteSticker(stickerId) {
+    if (confirm("Are you sure to delete this sticker?")) {
+        window.location.href = `/delete-sticker/${stickerId}`;
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

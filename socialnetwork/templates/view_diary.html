@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ diary.title }} - Community Diary{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative;">
+    <!-- 详情页的协作按钮：移到右上角，不挡头像/内容 -->
+    {% if diary.is_collaborative %}
+    <div style="
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
+        background: #1976d2;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    " onclick="window.location.href='{{ url_for('edit_diary', diary_id=diary.id) }}'">
+        🤝 Collaborative Edit
+    </div>
+    {% endif %}
+
+    <!-- 日记作者信息 -->
+    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px;">
+        <a href="{{ url_for('profile', user_id=diary.author.id) }}" style="text-decoration: none;">
+            <img src="{{ url_for('static', filename=diary.author.avatar or 'default_avatar.png') }}" 
+                 alt="{{ diary.author.username }}" 
+                 style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid #0d47a1;">
+        </a>
+        <div>
+            <h3 style="font-size: 22px; margin: 0; color: #222;">
+                <a href="{{ url_for('profile', user_id=diary.author.id) }}" style="text-decoration: none; color: inherit;">
+                    {{ diary.author.username }} (Creator)
+                </a>
+            </h3>
+            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">
+                Created: {{ diary.created_at.strftime('%Y-%m-%d %H:%M') }}
+                {% if diary.updated_at != diary.created_at %}
+                <br>Last updated: {{ diary.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                {% if diary.last_editor and diary.last_editor_id != diary.author_id %}
+                (by {{ diary.last_editor.username }})
+                {% endif %}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- 日记标题 -->
+    <h1 style="font-size: 36px; color: #0d47a1; margin-bottom: 20px; line-height: 1.3;">
+        {{ diary.title }}
+    </h1>
+
+    <!-- 日记内容 -->
+    <div style="font-size: 18px; line-height: 1.8; color: #333; margin-bottom: 30px; white-space: pre-line;">
+        {{ diary.content }}
+    </div>
+
+    <!-- 日记图片（修复路径，确保上传的图片能正确显示） -->
+    {% if diary.image_path %}
+    <div style="margin-bottom: 30px; text-align: center;">
+        <img src="{{ url_for('static', filename=diary.image_path) }}" alt="Diary image" style="max-width: 100%; border-radius: 8px; max-height: 600px; object-fit: cover;">
+    </div>
+    {% endif %}
+
+    <!-- 日记内贴纸（协作可见） -->
+    {% if diary.stickers %}
+    <div style="margin-bottom: 30px; padding: 15px; background: #f5f9ff; border-radius: 8px;">
+        <h4 style="color: #0d47a1; margin-bottom: 10px;">Collaborative Stickers:</h4>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            {% for sticker in diary.stickers %}
+            <img src="{{ url_for('static', filename=sticker.image_path) }}" alt="Sticker" style="width: 60px; height: 60px; object-fit: contain; border-radius: 8px;">
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 操作按钮（修复跳转：改用button+window.location.href确保跳转生效） -->
+    <div style="display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap;">
+        {% if diary.author_id == current_user.id or diary.is_collaborative %}
+        <button onclick="window.location.href='{{ url_for('edit_diary', diary_id=diary.id) }}'" style="
+            padding: 10px 20px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        " onmouseover="this.style.background='#1565c0'" onmouseout="this.style.background='#1976d2'">
+            {% if diary.author_id == current_user.id %}
+                Edit Diary
+            {% else %}
+                Collaborate on This Diary
+            {% endif %}
+        </button>
+        {% endif %}
+        
+        {% if diary.author_id == current_user.id %}
+        <button onclick="if(confirm('Are you sure to delete this diary? This action cannot be undone.')) window.location.href='{{ url_for('delete_diary', diary_id=diary.id) }}'" style="
+            padding: 10px 20px;
+            background: #c62828;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        " onmouseover="this.style.background='#b71c1c'" onmouseout="this.style.background='#c62828'">
+            Delete Diary
+        </button>
+        {% endif %}
+        
+        <button onclick="window.location.href='{{ url_for('home') }}'" style="
+            padding: 10px 20px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        " onmouseover="this.style.background='#555'" onmouseout="this.style.background='#666'">
+            Back to Home
+        </button>
+    </div>
+
+    <!-- 评论区（核心修复：评论数显示、提交跳转、删除跳转） -->
+    <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px;">
+        <h3 style="font-size: 24px; color: #0d47a1; margin-bottom: 20px;">Comments ({{ diary.comments_count or 0 }})</h3>
+        
+        <!-- 评论输入框（修复提交后跳转逻辑） -->
+        <form method="POST" action="{{ url_for('add_comment', diary_id=diary.id) }}" style="margin-bottom: 30px;">
+            <textarea name="content" rows="3" required style="
+                width: 100%;
+                padding: 12px 15px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 16px;
+                resize: vertical;
+                margin-bottom: 10px;
+            " placeholder="Write a comment..."></textarea>
+            <button type="submit" style="
+                padding: 8px 16px;
+                background: #0d47a1;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            " onmouseover="this.style.background='#093680'" onmouseout="this.style.background='#0d47a1'">
+                Post Comment
+            </button>
+        </form>
+        
+        <!-- 评论列表 -->
+        {% if diary.comments %}
+        <div style="display: grid; gap: 20px;">
+            {% for comment in diary.comments %}
+            <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <a href="{{ url_for('profile', user_id=comment.author.id) }}" style="text-decoration: none;">
+                        <img src="{{ url_for('static', filename=comment.author.avatar or 'default_avatar.png') }}" 
+                             alt="{{ comment.author.username }}" 
+                             style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;">
+                    </a>
+                    <div>
+                        <a href="{{ url_for('profile', user_id=comment.author.id) }}" style="font-weight: 600; color: #0d47a1; text-decoration: none;">
+                            {{ comment.author.username }}
+                        </a>
+                        <span style="color: #666; font-size: 12px;">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    {% if comment.author_id == current_user.id or diary.author_id == current_user.id %}
+                    <button onclick="if(confirm('Delete this comment?')) window.location.href='{{ url_for('delete_comment', comment_id=comment.id) }}'" style="
+                        margin-left: auto;
+                        background: none;
+                        border: none;
+                        color: #c62828;
+                        font-size: 12px;
+                        cursor: pointer;
+                        transition: color 0.2s ease;
+                    " onmouseover="this.style.color='#b71c1c'" onmouseout="this.style.color='#c62828'">
+                        Delete
+                    </button>
+                    {% endif %}
+                </div>
+                <p style="color: #333; line-height: 1.6; margin: 0;">{{ comment.content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: #666; text-align: center; padding: 20px;">No comments yet. Be the first to comment!</p>
+        {% endif %}
+    </div>
+
+    <!-- 互动区（修复点赞功能，兼容无CSRF场景） -->
+    <div style="display: flex; align-items: center; gap: 20px; padding-top: 20px; border-top: 1px solid #eee; margin-top: 30px;">
+        <button onclick="likeDiary({{ diary.id }})" style="
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 16px;
+            transition: color 0.2s ease;
+        " onmouseover="this.style.color='#e53935'" onmouseout="this.style.color='#666'">
+            ❤️ <span id="like-count-{{ diary.id }}">{{ diary.likes_count or 0 }}</span> Likes
+        </button>
+        <span style="font-size: 16px; color: #666;">💬 {{ diary.comments_count or 0 }} Comments</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 修复点赞功能：简化AJAX请求，适配后端无CSRF拦截，增加降级方案
+function likeDiary(diaryId) {
+    fetch(`/like-diary/${diaryId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            // 请求失败时刷新页面更新点赞数
+            window.location.reload();
+            return;
+        }
+        return response.json().catch(() => {
+            // 解析JSON失败也刷新
+            window.location.reload();
+        });
+    })
+    .then(data => {
+        if (data && data.status === 'success') {
+            document.getElementById(`like-count-${diaryId}`).innerText = data.new_count;
+        }
+    })
+    .catch(error => {
+        console.error('Like error:', error);
+        window.location.reload();
+    });
+}
+</script>
+{% endblock %}

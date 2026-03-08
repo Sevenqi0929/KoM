@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ capsule.title }} - Time Capsule{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding: 40px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+    <h1 style="font-size: 32px; color: #e91e63; text-align: center; margin-bottom: 10px;">
+        {{ capsule.title }}
+    </h1>
+    
+    <!-- Partner Info -->
+    <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; align-items: center;">
+        <!-- User 1 Avatar -->
+        <div style="text-align: center;">
+            <img src="/static/{{ capsule.user1.avatar if capsule.user1.avatar else 'default_avatar.png' }}" alt="{{ capsule.user1.username }}" style="
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid #e91e63;
+            ">
+            <p style="color: #333; margin: 5px 0 0 0; font-weight: 600;">{{ capsule.user1.username }}</p>
+        </div>
+        
+        <div style="color: #e91e63; font-size: 24px;">❤️</div>
+        
+        <!-- User 2 Avatar -->
+        <div style="text-align: center;">
+            <img src="/static/{{ capsule.user2.avatar if capsule.user2.avatar else 'default_avatar.png' }}" alt="{{ capsule.user2.username }}" style="
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid #e91e63;
+            ">
+            <p style="color: #333; margin: 5px 0 0 0; font-weight: 600;">{{ capsule.user2.username }}</p>
+        </div>
+    </div>
+    
+    <!-- Opening Date Info -->
+    <div style="text-align: center; margin-bottom: 30px; padding: 15px; background: #fce4ec; border-radius: 8px;">
+        {% if can_open and capsule.is_opened %}
+        <h3 style="color: #e91e63; margin: 0; font-size: 20px;">✨ Opened on {{ capsule.open_date.strftime('%B %d, %Y') }}</h3>
+        {% elif can_open and not capsule.is_opened %}
+        <h3 style="color: #e91e63; margin: 0; font-size: 20px;">🎉 Ready to Open!</h3>
+        {% else %}
+        <h3 style="color: #ff9800; margin: 0; font-size: 20px;">🔒 Sealed Until {{ capsule.open_date.strftime('%B %d, %Y') }}</h3>
+        <p style="color: #666; margin: 10px 0 0 0;">
+            {{ (capsule.open_date - datetime.utcnow()).days }} days left to open together
+        </p>
+        {% endif %}
+    </div>
+    
+    <!-- Capsule Content (only visible if opened) -->
+    {% if capsule.is_opened %}
+    <div style="border-top: 2px solid #fce4ec; padding-top: 30px;">
+        <!-- User 1's Message -->
+        <div style="margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <img src="/static/{{ capsule.user1.avatar if capsule.user1.avatar else 'default_avatar.png' }}" alt="{{ capsule.user1.username }}" style="
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                ">
+                <h3 style="color: #333; margin: 0; font-size: 18px;">{{ capsule.user1.username }}'s Message</h3>
+            </div>
+            <p style="color: #444; line-height: 1.6; font-size: 16px; white-space: pre-line;">
+                {{ capsule.content_user1 }}
+            </p>
+        </div>
+        
+        <!-- User 2's Message (if exists) -->
+        {% if capsule.content_user2 %}
+        <div style="margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <img src="/static/{{ capsule.user2.avatar if capsule.user2.avatar else 'default_avatar.png' }}" alt="{{ capsule.user2.username }}" style="
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                ">
+                <h3 style="color: #333; margin: 0; font-size: 18px;">{{ capsule.user2.username }}'s Message</h3>
+            </div>
+            <p style="color: #444; line-height: 1.6; font-size: 16px; white-space: pre-line;">
+                {{ capsule.content_user2 }}
+            </p>
+        </div>
+        {% else %}
+        <div style="margin-bottom: 30px; padding: 20px; background: #fff3e0; border-radius: 8px; text-align: center;">
+            <p style="color: #ff9800; margin: 0;">
+                Your partner hasn't added their message yet 😊
+            </p>
+        </div>
+        {% endif %}
+        
+        <!-- Capsule Photo (if exists) -->
+        {% if capsule.image_path %}
+        <div style="text-align: center; margin-top: 30px;">
+            <h3 style="color: #333; margin-bottom: 15px;">📸 Your Special Photo</h3>
+            <img src="/static/{{ capsule.image_path }}" alt="Capsule Photo" style="
+                max-width: 100%;
+                border-radius: 8px;
+                max-height: 500px;
+                object-fit: cover;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            ">
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <!-- Locked State -->
+    <div style="text-align: center; padding: 60px 20px;">
+        <div style="font-size: 80px; margin-bottom: 20px;">🔒</div>
+        <h3 style="color: #666; font-size: 24px; margin-bottom: 15px;">This capsule is still sealed</h3>
+        <p style="color: #999; font-size: 16px;">
+            Come back on {{ capsule.open_date.strftime('%B %d, %Y') }} to open it together with your partner 💞
+        </p>
+    </div>
+    {% endif %}
+    
+    <!-- Back Button -->
+    <div style="text-align: center; margin-top: 40px;">
+        <a href="{{ url_for('time_capsule_list') }}" style="
+            padding: 10px 25px;
+            background: #e91e63;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+        ">
+            ← Back to Your Capsules
+        </a>
+    </div>
+</div>
+{% endblock %}

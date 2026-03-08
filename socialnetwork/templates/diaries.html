@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}My Diaries - KoM{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h2>My Diaries</h2>
+        <p style="margin: 15px 0;">
+            <a href="{{ url_for('create_diary') }}" class="btn btn-success">Create New Diary</a>
+        </p>
+    </div>
+
+    {% if diaries %}
+        {% for diary in diaries %}
+            <div class="diary-item">
+                <div class="diary-header">
+                    <span class="diary-creator-name">
+                        {% if current_user.id == diary.creator_id %}
+                            (Creator)
+                        {% else %}
+                            (Editor)
+                        {% endif %}
+                    </span>
+                    <span class="diary-meta">
+                        Created: {{ diary.created_at.strftime('%B %d, %Y') }} | 
+                        Last Updated: {{ diary.updated_at.strftime('%B %d, %Y') }}
+                    </span>
+                </div>
+                <h3 class="diary-title">{{ diary.title }}</h3>
+                <div class="diary-content">
+                    {{ diary.content[:200] }}{% if diary.content|length > 200 %}...{% endif %}
+                </div>
+                <a href="{{ url_for('view_diary', diary_id=diary.id) }}" class="btn">View Diary</a>
+                {% if current_user.id == diary.creator_id %}
+                    <a href="{{ url_for('edit_diary', diary_id=diary.id) }}" class="btn">Edit Diary</a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <p>You don't have any diaries yet. Create your first diary to start recording your life!</p>
+            <a href="{{ url_for('create_diary') }}" class="btn btn-success">Create First Diary</a>
+        </div>
+    {% endif %}
+{% endblock %}

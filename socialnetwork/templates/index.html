@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - KoM Diary Platform{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h1>Welcome to KoM, {{ current_user.username }}!</h1>
+        <p style="margin: 15px 0;">Track your life moments with personalized diaries and fun stickers</p>
+        <div>
+            <a href="{{ url_for('create_diary') }}" class="btn btn-success">Create Your First Diary</a>
+            <a href="{{ url_for('profile', user_id=current_user.id) }}" class="btn">Customize Profile</a>
+        </div>
+    </div>
+
+    <h2 style="margin: 25px 0 15px 0; color: #0d47a1;">Latest Public Diaries</h2>
+    
+    {% if diaries %}
+        {% for diary in diaries %}
+            <div class="diary-item">
+                <div class="diary-header">
+                    <img src="/static/{{ diary.creator.avatar }}" alt="{{ diary.creator.username }}" class="diary-creator-avatar">
+                    <span class="diary-creator-name">{{ diary.creator.username }}</span>
+                    <span class="diary-meta">
+                        Created: {{ diary.created_at.strftime('%B %d, %Y - %H:%M') }} | 
+                        Permission: {{ 'Invite Only' if diary.join_permission == 'invite' else 'Open to All' }}
+                    </span>
+                </div>
+                <h3 class="diary-title">{{ diary.title }}</h3>
+                <div class="diary-content">
+                    {{ diary.content[:250] }}{% if diary.content|length > 250 %}...{% endif %}
+                </div>
+                <a href="{{ url_for('view_diary', diary_id=diary.id) }}" class="btn">Read Full Diary</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <p>No diaries found yet. Be the first to create a diary!</p>
+            <a href="{{ url_for('create_diary') }}" class="btn btn-success">Create Diary Now</a>
+        </div>
+    {% endif %}
+{% endblock %}

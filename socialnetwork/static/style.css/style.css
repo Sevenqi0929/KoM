@@ -1,0 +1,41 @@
+/* 全局样式 */
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    padding-top: 70px;
+}
+
+/* 导航栏 */
+.navbar {
+    background-color: #343a40 !important;
+}
+
+/* 动态卡片 */
+.post-card {
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 留言区域 */
+.comment-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.comment-card {
+    background-color: #f1f3f5;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    padding: 10px;
+}
+
+/* 发布框 */
+.post-form, .comment-form {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}

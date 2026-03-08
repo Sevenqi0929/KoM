@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Diary - {{ diary.title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 50px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.05);">
+    <h1 style="color: #0d47a1; font-size: 36px; margin-bottom: 30px;">Edit Diary</h1>
+    
+    <form id="editDiaryForm" method="POST" action="{{ url_for('edit_diary', diary_id=diary.id) }}" enctype="multipart/form-data">
+        <div style="margin-bottom: 20px;">
+            <label for="title" style="display: block; font-size: 16px; color: #333; margin-bottom: 8px;">Title</label>
+            <input type="text" id="title" name="title" value="{{ diary.title }}" required style="
+                width: 100%;
+                padding: 12px 15px;
+                font-size: 16px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                box-sizing: border-box;
+            ">
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label for="content" style="display: block; font-size: 16px; color: #333; margin-bottom: 8px;">Content</label>
+            <textarea id="content" name="content" rows="10" required style="
+                width: 100%;
+                padding: 12px 15px;
+                font-size: 16px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                box-sizing: border-box;
+                resize: vertical;
+            ">{{ diary.content }}</textarea>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 16px; color: #333; margin-bottom: 8px;">Current Image</label>
+            {% if diary.image_path %}
+                <img src="/static/{{ diary.image_path }}" alt="Current diary image" style="max-width: 300px; border-radius: 8px; margin-bottom: 10px;">
+            {% else %}
+                <p style="color: #666; margin-bottom: 10px;">No image uploaded</p>
+            {% endif %}
+            
+            <!-- 原生上传框 -->
+            <label style="display: block; font-size: 16px; color: #333; margin-bottom: 8px;">Replace Image</label>
+            <input type="file" name="image" id="imageInput" accept="image/png, image/jpg, image/gif, image/bmp" 
+                   style="padding: 5px; font-size: 14px; cursor: pointer; width: 100%; box-sizing: border-box;">
+        </div>
+        
+        <!-- 仅日记发布者可修改协作权限 -->
+        {% if current_user.id == diary.author_id %}
+        <div style="margin-bottom: 30px;">
+            <label for="join_permission" style="display: block; font-size: 16px; color: #333; margin-bottom: 8px;">Join Permission</label>
+            <select id="join_permission" name="join_permission" style="
+                width: 100%;
+                padding: 12px 15px;
+                font-size: 16px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                box-sizing: border-box;
+            ">
+                <option value="open" {% if diary.join_permission == 'open' %}selected{% endif %}>Open (Anyone can join)</option>
+                <option value="private" {% if diary.join_permission == 'private' %}selected{% endif %}>Private (No one can join)</option>
+            </select>
+            <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                Open: Other users can request to join and edit this diary<br>
+                Private: No one can join or edit this diary except you
+            </p>
+        </div>
+        {% else %}
+        <!-- 非发布者：仅显示权限状态，不可修改 -->
+        <div style="margin-bottom: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <p style="font-size: 16px; color: #333; margin: 0;">Join Permission: 
+                <span style="font-weight: 600; color: {% if diary.join_permission == 'open' %}#4caf50{% else %}#f44336{% endif %};">
+                    {{ diary.join_permission | upper }}
+                </span>
+            </p>
+            <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                {% if diary.join_permission == 'open' %}
+                    This diary is open for collaboration - you can request to join!
+                {% else %}
+                    This diary is private - only the author can edit it.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+        
+        <!-- 仅发布者能提交修改 -->
+        {% if current_user.id == diary.author_id %}
+        <button type="submit" style="
+            padding: 12px 24px;
+            background: #0d47a1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        ">Update Diary</button>
+        {% endif %}
+        
+        <a href="{{ url_for('view_diary', diary_id=diary.id) }}" style="
+            display: inline-block;
+            margin-left: 15px;
+            padding: 12px 24px;
+            background: #f5f5f5;
+            color: #333;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        ">Cancel</a>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 保留原有基础事件
+});
+</script>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Time Capsules - Community Diary{% endblock %}
+
+{% block content %}
+<h1 style="font-size: 36px; color: #e91e63; text-align: center; margin-bottom: 40px;">
+    🕰️ Your Time Capsules
+</h1>
+
+<div style="display: grid; gap: 25px; max-width: 800px; margin: 0 auto;">
+    {% if capsules %}
+        {% for capsule in capsules %}
+        <div style="background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative;">
+            <!-- Capsule Status Badge -->
+            {% if capsule.is_opened %}
+            <div style="
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: #4caf50;
+                color: white;
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+            ">
+                ✨ Opened
+            </div>
+            {% else %}
+            <div style="
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: #ff9800;
+                color: white;
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+            ">
+                🔒 Sealed
+            </div>
+            {% endif %}
+
+            <h2 style="font-size: 24px; color: #333; margin-bottom: 10px;">{{ capsule.title }}</h2>
+            
+            <!-- Partner Info -->
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <img src="/static/{% if capsule.user1.id == current_user.id and capsule.user2.avatar %}
+                    {{ capsule.user2.avatar }}
+                {% elif capsule.user2.id == current_user.id and capsule.user1.avatar %}
+                    {{ capsule.user1.avatar }}
+                {% else %}
+                    default_avatar.png
+                {% endif %}" alt="Partner" style="
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                ">
+                <p style="color: #666; margin: 0;">
+                    With: {{ capsule.user1.username if capsule.user2.id == current_user.id else capsule.user2.username }}
+                </p>
+            </div>
+            
+            <!-- Opening Date -->
+            <div style="margin-bottom: 20px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                <p style="color: #333; margin: 0; font-weight: 600;">
+                    Opening Date: {{ capsule.open_date.strftime('%B %d, %Y') }}
+                </p>
+                {% if not capsule.is_opened %}
+                <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">
+                    {{ (capsule.open_date - datetime.utcnow()).days }} days left to open 🎉
+                </p>
+                {% endif %}
+            </div>
+            
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px;">
+                <a href="{{ url_for('time_capsule_detail', capsule_id=capsule.id) }}" style="
+                    padding: 8px 15px;
+                    background: #e91e63;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    font-weight: 600;
+                ">
+                    {% if capsule.is_opened %}View Capsule{% else %}Check Status{% endif %}
+                </a>
+                
+                <!-- Add Content Button (only for partner who hasn't added content) -->
+                {% if capsule.user2_id == current_user.id and not capsule.content_user2 %}
+                <a href="{{ url_for('add_capsule_content', capsule_id=capsule.id) }}" style="
+                    padding: 8px 15px;
+                    background: #2196f3;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    font-weight: 600;
+                ">
+                    Add Your Message
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div style="text-align: center; padding: 60px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+        <h3 style="font-size: 22px; color: #666; margin-bottom: 20px;">No Time Capsules Yet</h3>
+        <a href="{{ url_for('create_time_capsule') }}" style="
+            padding: 12px 30px;
+            background: #e91e63;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+        ">
+            Create Your First Time Capsule 💌
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

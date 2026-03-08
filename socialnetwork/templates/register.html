@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - KoM Diary Platform{% endblock %}
+
+{% block content %}
+    <div class="card" style="max-width: 500px; margin: 0 auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <h2 style="text-align: center; margin-bottom: 25px; color: #0d47a1;">Create New Account</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div style="
+                        padding: 12px 15px;
+                        margin-bottom: 20px;
+                        border-radius: 6px;
+                        color: white;
+                        background-color: {{ '#4caf50' if category == 'success' else '#f44336' }};
+                        text-align: center;
+                    ">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div style="margin-bottom: 20px;">
+                <label for="username" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600;">Username</label>
+                <input type="text" id="username" name="username" required placeholder="Choose a username" style="
+                    width: 100%;
+                    padding: 12px 15px;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    font-size: 16px;
+                ">
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="email" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600;">Email Address</label>
+                <input type="email" id="email" name="email" required placeholder="Your email address" style="
+                    width: 100%;
+                    padding: 12px 15px;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    font-size: 16px;
+                ">
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <label for="password" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600;">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Create a password" style="
+                    width: 100%;
+                    padding: 12px 15px;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    font-size: 16px;
+                ">
+            </div>
+            
+            <button type="submit" style="
+                width: 100%;
+                padding: 12px;
+                background-color: #0d47a1;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            " onmouseover="this.style.backgroundColor='#1565c0'" onmouseout="this.style.backgroundColor='#0d47a1'">
+                Register
+            </button>
+        </form>
+        
+        <p style="text-align: center; margin-top: 20px; color: #666;">
+            Already have an account? <a href="{{ url_for('login') }}" style="color: #0d47a1; font-weight: bold; text-decoration: none;">Login here</a>
+        </p>
+    </div>
+{% endblock %}

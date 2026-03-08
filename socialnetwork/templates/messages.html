@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Messages - KoM</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="{{ url_for('index') }}" class="navbar-brand">KoM</a>
+            <div class="navbar-nav">
+                <a href="{{ url_for('profile', username=current_user.username) }}">Profile</a>
+                <a href="{{ url_for('diaries') }}">Diaries</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- 提示消息 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- 发送私信 -->
+        <div class="card mb-4">
+            <h3 class="mb-4">Send New Message</h3>
+            <form method="POST" action="{{ url_for('send_message', recipient_id='0') }}" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="form-label">Recipient Username</label>
+                    <input type="text" class="form-control" name="recipient_username" placeholder="Enter username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Message</label>
+                    <textarea class="form-control" name="content" rows="4" placeholder="Type your message..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Attach Image (optional)</label>
+                    <input type="file" class="form-control" name="image" accept="image/*">
+                </div>
+                <button type="submit" class="btn">Send Message</button>
+            </form>
+        </div>
+
+        <!-- 消息列表 -->
+        <div class="card">
+            <h3 class="mb-4">Your Messages</h3>
+
+            <!-- 收到的消息 -->
+            <div class="mb-4">
+                <h4>Received</h4>
+                {% if received_msgs %}
+                    {% for msg in received_msgs %}
+                        <div class="mb-3">
+                            <small class="text-muted">From: {{ msg.sender.username }} | {{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                            <div class="message-bubble message-received">
+                                {{ msg.content }}
+                                {% if msg.image_path %}
+                                    <br><img src="{{ url_for('static', filename='uploads/' + msg.image_path) }}" width="200" class="mt-2 rounded">
+                                {% endif %}
+                            </div>
+                            {% if not msg.is_read %}
+                                <a href="{{ url_for('mark_read', msg_id=msg.id) }}" class="btn btn-outline btn-sm">Mark as Read</a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No received messages yet.</p>
+                {% endif %}
+            </div>
+
+            <hr>
+
+            <!-- 发送的消息 -->
+            <div>
+                <h4>Sent</h4>
+                {% if sent_msgs %}
+                    {% for msg in sent_msgs %}
+                        <div class="mb-3">
+                            <small class="text-muted">To: {{ msg.recipient.username }} | {{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                            <div class="message-bubble message-sent">
+                                {{ msg.content }}
+                                {% if msg.image_path %}
+                                    <br><img src="{{ url_for('static', filename='uploads/' + msg.image_path) }}" width="200" class="mt-2 rounded">
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No sent messages yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
