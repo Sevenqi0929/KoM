@@ -1,7 +1,7 @@
 Flask==2.3.3
 gunicorn==21.2.0
 # 如果你用到了数据库，加上：
-# flask-sqlalchemy==3.1.1
+flask-sqlalchemy==3.1.1
 # flask-migrate==4.0.7
 # 如果你用到了登录功能，加上：
 # flask-login==0.6.3
