@@ -7,3 +7,4 @@ flask-migrate==4.0.7
 flask-login==0.6.3
 # 其他你在项目中 import 过的包都要列在这里
 flask-wtf==1.2.1
+pytz==2023.3.post1
