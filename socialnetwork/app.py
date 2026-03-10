@@ -16,7 +16,12 @@ import pytz  # 新增：时区转换
 # --------------------------
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:mypassword@uwvpsmknjesqrzhmnudc.supabase.co:5432/postgres'
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_recycle': 300,
+    'pool_pre_ping': True
+}
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 新增：时区配置（北京时间）
